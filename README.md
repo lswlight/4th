@@ -11,7 +11,8 @@ skills/youtube-studio/
 │   ├── hooks.json           # 훅 공식 21가지 (한국어 이름·예시·판별 패턴 포함)
 │   ├── title.py             # 제목+썸네일 문구 점검 (한글 화면 폭 기준 잘림)
 │   ├── deadair.py           # 자막 → 컷 편집 목록 (공백·군말·NG 재시작)
-│   └── retention.py         # 시청 지속률 이탈 지점 (Studio CSV 또는 vidIQ JSON)
+│   ├── retention.py         # 시청 지속률 이탈 지점 (Studio CSV 또는 vidIQ JSON)
+│   └── swipe.py             # 아는 채널들 중 평소보다 터진 영상 (RSS, 무료)
 ├── references/              # 모드별 작업 규칙 + 말투 프로필(voice.md)
 └── LICENSE-upstream         # 원본 MIT 라이선스
 dist/youtube-studio.zip      # claude.ai 업로드용 패키지
@@ -37,7 +38,7 @@ dist/youtube-studio.zip      # claude.ai 업로드용 패키지
 |---|---|
 | 특정 영상 링크를 장면 단위로 분석 (Gemini가 화면을 직접 봄), 스토리보드, 영상 생성 프롬프트 | `youtube-analyzer` 스킬 |
 | 쿠팡 파트너스 쇼츠 | `coupang-affiliate-shorts` 스킬 |
-| 떡상 영상 찾기, 키워드, 채널 분석, 지속률 데이터, 챕터 생성 | vidIQ 커넥터 (호출마다 크레딧) |
+| 떡상 영상 찾기 (모르는 채널까지) | vidIQ 커넥터 — 크레딧은 여기에 우선 사용 |
 | 기획, 대본, 점수 매기기, 판단 | 이 스킬 (Claude) |
 
 ## 원본과 달라진 점
@@ -47,7 +48,11 @@ dist/youtube-studio.zip      # claude.ai 업로드용 패키지
 - **한국어화**: 원본 점수 규칙은 영어 단어만 찾아서 같은 뜻의 한국어 훅이 62점 → 34점으로 나왔습니다. 한국어 규칙(호명 "~이시라면/여러분", 손실 "놓치/손해", 궁금증 "왜/아무도", 음절 기준 길이)을 추가해 같은 훅이 59점이 됩니다. 한국어 규칙은 실제 데이터로 보정하지 않았으니 참고용입니다.
 - **제목 길이**: 글자 수 대신 화면 폭(한글 1.7배)으로 잽니다. 데스크톱 약 35자, 모바일 약 23자.
 - **11개 → 1개 스킬**: claude.ai에 한 번만 올리면 되도록 모드로 합쳤습니다.
-- **뺀 것 (겹침)**: `swipe.py`(채널 대비 배수 계산) → vidIQ 아웃라이어가 같은 값을 줌. `chapters.py`(영어 전용 챕터) → vidIQ 챕터 생성. 레퍼런스 영상 분석 → `youtube-analyzer`.
+- **겹치는 기능 정리 (vidIQ 무료 크레딧 월 약 150, 호출당 5)**
+  - 떡상 영상 찾기: vidIQ 우선 (유튜브 전체 탐색). 크레딧이 없으면 `swipe.py` + 채널 RSS로 아는 채널만 무료 탐색.
+  - 챕터: `chapters.py`(영어 전용)는 빼고 Claude가 자막을 직접 읽고 씀. vidIQ 챕터 생성도 쓰지 않음 (품질 차이 거의 없음).
+  - 키워드·지속률·댓글·채널 분석: 사용자 자료(Studio CSV, 붙여 넣은 댓글) 먼저, 못 줄 때만 vidIQ.
+  - 레퍼런스 영상 장면 분석: `youtube-analyzer` (Gemini 무료 한도).
 - **투자 콘텐츠 규칙** 추가: 수익 보장·매수 권유 금지, 조건부 시나리오, 면책 문구.
 
 ## 도구 직접 돌리기
@@ -57,7 +62,10 @@ python3 skills/youtube-studio/scripts/hookscore.py --hook "월급 300 이하 직
 python3 skills/youtube-studio/scripts/title.py --title "볼린저 밴드 상단 돌파 후 꼭 볼 3가지" --thumb "진짜 돌파?"
 python3 skills/youtube-studio/scripts/deadair.py transcript.srt
 python3 skills/youtube-studio/scripts/retention.py retention.csv --duration 600 --transcript transcript.srt
+python3 skills/youtube-studio/scripts/swipe.py --rss @채널1 @채널2 --save c.json && python3 skills/youtube-studio/scripts/swipe.py c.json --min 2.0
 ```
+
+`swipe.py --rss` 는 www.youtube.com 접속이 필요합니다. claude.ai에서 `NETWORK_BLOCKED` 가 나오면 Settings → Capabilities 의 코드 실행 네트워크 설정에서 `www.youtube.com` 을 허용하거나, 영상 목록을 붙여 넣으면 됩니다.
 
 ## 설치 (모든 채팅에 적용하려면)
 

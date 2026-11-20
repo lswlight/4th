@@ -55,6 +55,8 @@ python3 <이 스킬 폴더>/scripts/hookscore.py hooks.txt                   # �
 python3 <이 스킬 폴더>/scripts/title.py --title "제목" --thumb "문구"    # 제목+썸네일 점검
 python3 <이 스킬 폴더>/scripts/deadair.py transcript.srt                # 컷 편집 목록
 python3 <이 스킬 폴더>/scripts/retention.py retention.csv --duration 600 --transcript transcript.srt
+python3 <이 스킬 폴더>/scripts/swipe.py --rss @채널1 @채널2 --save c.json   # 아는 채널들 중 평소보다 터진 영상 (무료)
+python3 <이 스킬 폴더>/scripts/swipe.py c.json --min 2.0
 ```
 
 `scripts/hooks.json`: 훅 공식 21가지 (한국어 이름·모양·예시·실패 조건·판별 패턴).
@@ -62,12 +64,21 @@ python3 <이 스킬 폴더>/scripts/retention.py retention.csv --duration 600 --
 **점수의 한계를 말한다.** hookscore 영어 규칙은 실제 훅 74개로 보정됐지만, 한국어 규칙은 같은 구조로 새로 만든 것이라
 보정 데이터가 없다. 낮은 점수는 "다시 볼 이유", 높은 점수는 "약속이 아님"으로 전한다.
 
-## 4. 연결된 도구 (있으면 쓴다)
+## 4. vidIQ 크레딧 쓰는 순서
 
-- **vidIQ**: 아웃라이어 영상(`vidiq_outliers`), 키워드(`vidiq_keyword_research`), 내 채널 분석(`vidiq_channel_analytics`),
-  댓글(`vidiq_video_comments`), 챕터(`vidiq_generate_video_chapters`), 제목 점수(`vidiq_score_title`).
-  호출마다 크레딧이 든다. 같은 질문으로 반복 호출하지 않는다. 클립 자동 생성(`vidiq_generate_clips`, 분당 과금)은 사용자가 허락할 때만 쓴다.
-- vidIQ가 없으면 사용자에게 자료(자막 파일, Studio에서 받은 CSV, 영상 목록)를 받아 같은 일을 한다.
+vidIQ 무료 플랜은 크레딧이 적다 (월 약 150, 호출 대부분 5 → 한 달 약 30번). **효과가 큰 곳에만 쓰고, 나머지는 무료 도구로 한다.**
+
+| 순위 | 일 | 방법 |
+|---|---|---|
+| ① 쓴다 | 바이럴 찾기 (모르는 채널까지 유튜브 전체 탐색) | `vidiq_outliers` 한 번에 넉넉히. 크레딧이 없으면 `swipe.py` (아는 채널만) |
+| ② 아낀다 | 키워드, 지속률 데이터, 댓글 가져오기, 채널 분석 | 사용자가 준 자료(Studio CSV, 붙여 넣은 댓글)로 먼저. 자료를 못 줄 때만 vidIQ |
+| ③ 안 쓴다 | 챕터, 제목 점수, 답글 생성 | Claude가 직접 (품질 차이가 거의 없음) |
+| 허락 필요 | 클립 자동 생성 `vidiq_generate_clips` | 분당 과금. 사용자가 명시적으로 원할 때만 |
+
+- vidIQ를 부르기 전에 `vidiq_balance`(무료)로 잔액을 확인하고, 이번 호출에 몇 크레딧이 드는지 한 줄로 알린다.
+- 같은 질문으로 다시 부르지 않는다. 처음부터 `limit` 을 넉넉히 준다.
+- vidIQ가 연결돼 있지 않으면 무료 경로만으로 끝까지 한다.
+- 영상 장면 분석은 vidIQ가 아니라 **youtube-analyzer**(Gemini 무료 한도)가 맡는다.
 
 ## 5. 마무리 (모든 모드 공통)
 

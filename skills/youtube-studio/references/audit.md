@@ -10,7 +10,7 @@
 4. **업로드 리듬.** 빈도가 아니라 **일정함**. 한 주에 여섯 개 올리고 한 달 쉬는 것보다 2주에 하나를 계속하는 게 낫다.
 5. **지속률 모양** (지속률 모드).
 
-vidIQ가 있으면: `vidiq_user_channels` 로 채널 확인 → `vidiq_channel_analytics`(report: top_videos, traffic_sources, shorts_vs_longform_split) → `vidiq_channel_videos` 로 최근 영상 목록. 2026-08-27부터 조회수 집계 방식이 바뀌었으니, 그 날짜 전후를 비교할 때는 `views` 대신 `engagedViews` 를 쓴다.
+크레딧이 남으면 vidIQ로 데이터를 받는다 (호출당 5, 꼭 필요한 것만): `vidiq_user_channels` 로 채널 확인 → `vidiq_channel_analytics`(report: top_videos, traffic_sources, shorts_vs_longform_split) → `vidiq_channel_videos` 로 최근 영상 목록. 2026-08-27부터 조회수 집계 방식이 바뀌었으니, 그 날짜 전후를 비교할 때는 `views` 대신 `engagedViews` 를 쓴다.
 
 ## 넘겨줄 것
 

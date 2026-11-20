@@ -4,8 +4,8 @@
 
 ## 데이터 얻기
 
-- **vidIQ 연결 시**: `vidiq_channel_analytics` 에 `report: "audience_retention"`, `filters: "video==영상ID"`. 결과 행을 JSON 파일로 저장해 그대로 넣는다.
-- **직접**: YouTube Studio → 영상 → 분석 → 참여도 → 시청 지속률 차트 → 다운로드 아이콘.
+- **기본 (무료)**: YouTube Studio → 영상 → 분석 → 참여도 → 시청 지속률 차트 → 다운로드 아이콘. CSV를 받는다.
+- **사용자가 파일을 못 받을 때만** vidIQ `vidiq_channel_analytics` (`report: "audience_retention"`, `filters: "video==영상ID"`, 5크레딧). 결과 행을 JSON 파일로 저장해 그대로 넣는다.
 
 ```bash
 python3 scripts/retention.py retention.json --duration 600 --transcript transcript.srt
