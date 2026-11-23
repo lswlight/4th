@@ -12,7 +12,8 @@ skills/youtube-studio/
 │   ├── title.py             # 제목+썸네일 문구 점검 (한글 화면 폭 기준 잘림)
 │   ├── deadair.py           # 자막 → 컷 편집 목록 (공백·군말·NG 재시작)
 │   ├── retention.py         # 시청 지속률 이탈 지점 (Studio CSV 또는 vidIQ JSON)
-│   └── swipe.py             # 아는 채널들 중 평소보다 터진 영상 (RSS, 무료)
+│   ├── swipe.py             # 아는 채널들 중 평소보다 터진 영상 (RSS, 무료)
+│   └── audioqc.py           # 음성 이음 잡음(찍·뻑·틱) 정리·점검 (ffmpeg 필요)
 ├── references/              # 모드별 작업 규칙 + 말투 프로필(voice.md)
 └── LICENSE-upstream         # 원본 MIT 라이선스
 dist/youtube-studio.zip      # claude.ai 업로드용 패키지
@@ -63,6 +64,7 @@ python3 skills/youtube-studio/scripts/title.py --title "볼린저 밴드 상단 
 python3 skills/youtube-studio/scripts/deadair.py transcript.srt
 python3 skills/youtube-studio/scripts/retention.py retention.csv --duration 600 --transcript transcript.srt
 python3 skills/youtube-studio/scripts/swipe.py --rss @채널1 @채널2 --save c.json && python3 skills/youtube-studio/scripts/swipe.py c.json --min 2.0
+python3 skills/youtube-studio/scripts/audioqc.py check 완성본.mp4
 ```
 
 `swipe.py --rss` 는 www.youtube.com 접속이 필요합니다. claude.ai에서 `NETWORK_BLOCKED` 가 나오면 Settings → Capabilities 의 코드 실행 네트워크 설정에서 `www.youtube.com` 을 허용하거나, 영상 목록을 붙여 넣으면 됩니다.
