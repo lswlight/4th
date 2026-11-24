@@ -4,12 +4,15 @@
   clean  : AI 내레이션 한 문장 정리 — 앞뒤의 짧은 '틱' 덩어리를 지우고, 말끝 여운은 끝까지 살린다.
   join   : 여러 음성을 압축 없이(WAV) 이어 붙인다. 이음매마다 짧은 페이드(또는 크로스페이드)를 넣는다.
   check  : 완성 음성·영상에서 튀는 소리와 갑자기 끊기는 곳을 찾아 시각을 알려 준다.
+  cuts   : 현장 음성을 자를 구간 목록을 검사한다. 자르는 점이 말 중간이면 경고하고 가장 가까운 쉼을 알려 준다.
+           --export 폴더 를 주면 조각을 WAV로 꺼내 준다 → 조각마다 받아쓰기로 첫·마지막 단어를 확인한다.
 
 예)
   python3 audioqc.py clean raw.wav out.wav --tempo 1.0 --pad 0.3
   python3 audioqc.py join a.wav b.wav c.wav -o narration.wav --gap 0.3
   python3 audioqc.py join a.wav b.wav -o mix.wav --xfade 0.05
   python3 audioqc.py check final.mp4 --speed 1.0
+  python3 audioqc.py cuts cuts.txt --export pieces/     # cuts.txt 한 줄: 파일 시작초 끝초
 """
 import argparse, array, math, subprocess, sys
 
@@ -89,6 +92,54 @@ def check(path, speed=1.0, sr=16000):
     return 1 if (cuts or peak > 0.89) else 0
 
 
+def cut_report(path, t_in, t_out, ctx=3.0, sr=16000, win=0.02):
+    """자르는 점 앞뒤를 보고 말 중간인지 판단. 배경 소음이 깔린 현장 녹음이라 '무음'이 아니라
+    '주변 바닥 소음보다 얼마나 큰가'로 본다."""
+    s0 = max(0.0, t_in - ctx)
+    raw = subprocess.run(['ffmpeg', '-v', 'error', '-ss', str(s0), '-t', str(t_out - s0 + ctx), '-i', path,
+                          '-ac', '1', '-ar', str(sr), '-f', 's16le', '-'], capture_output=True, check=True).stdout
+    a = array.array('h'); a.frombytes(raw); x = [v / 32768.0 for v in a]
+    db = rms_db(x, sr, win)
+    floor = sorted(db)[max(0, len(db) // 10)]          # 하위 10% = 바닥 소음
+    def at(t): return int((t - s0) / win)
+    def busy(i, half=3):                               # 앞뒤 60ms 중 가장 큰 값이 바닥+8dB 넘으면 말소리
+        seg = db[max(0, i - half):i + half + 1]
+        return bool(seg) and max(seg) > floor + 8
+    def nearest_pause(i, reach=1.5):
+        r = int(reach / win)
+        for d in range(0, r + 1):
+            for j in (i - d, i + d):
+                seg = db[max(0, j - 4):j + 5]          # 180ms 동안 바닥+4dB 이하 = 쉼
+                if 0 <= j < len(db) and seg and max(seg) <= floor + 4:
+                    return s0 + j * win
+        return None
+    out = []
+    for name, t in (('시작', t_in), ('끝', t_out)):
+        i = at(t)
+        if busy(i):
+            p = nearest_pause(i)
+            out.append(f'{name} {t:.2f}s: 말 중간일 수 있음 → 가까운 쉼 ' + (f'{p:.2f}s' if p is not None else '없음(±1.5초)'))
+        else:
+            out.append(f'{name} {t:.2f}s: 쉼 위 (OK)')
+    return out
+
+
+def cuts(listfile, export=None):
+    bad = 0
+    for n, line in enumerate(l for l in open(listfile, encoding='utf-8') if l.strip() and not l.startswith('#')):
+        f, a, b = line.split()[:3]; a, b = float(a), float(b)
+        rep = cut_report(f, a, b)
+        bad += sum('말 중간' in r for r in rep)
+        print(f'[{n}] {f} {a:.2f}~{b:.2f}  ' + ' / '.join(rep))
+        if export:
+            import os; os.makedirs(export, exist_ok=True)
+            subprocess.run(['ffmpeg', '-v', 'error', '-y', '-ss', str(a), '-t', str(b - a), '-i', f, '-vn',
+                            '-ac', '1', '-ar', '16000', f'{export}/{n:02d}.wav'], check=True)
+    print('※ 이 검사는 소리 크기만 본다. 조각마다 받아쓰기를 다시 돌려 첫 단어와 마지막 단어가 온전한지 반드시 확인한다.')
+    if export: print(f'조각 WAV: {export}/NN.wav')
+    return 1 if bad else 0
+
+
 def join(paths, out, gap=0.0, xfade=0.0, edge=0.03):
     if xfade > 0:
         ins = sum((['-i', p] for p in paths), [])
@@ -115,6 +166,7 @@ def main():
     c.add_argument('--target-db', type=float, default=-18.0)
     j = sp.add_parser('join'); j.add_argument('src', nargs='+'); j.add_argument('-o', required=True)
     j.add_argument('--gap', type=float, default=0.0); j.add_argument('--xfade', type=float, default=0.0)
+    u = sp.add_parser('cuts'); u.add_argument('src'); u.add_argument('--export')
     k = sp.add_parser('check'); k.add_argument('src'); k.add_argument('--speed', type=float, default=1.0)
     a = ap.parse_args()
     if a.cmd == 'clean':
@@ -122,6 +174,8 @@ def main():
         encode(s, a.dst, tempo=a.tempo); print(f'{a.dst}: {len(s) / SR / a.tempo:.2f}초')
     elif a.cmd == 'join':
         join(a.src, a.o, gap=a.gap, xfade=a.xfade); print(a.o)
+    elif a.cmd == 'cuts':
+        sys.exit(cuts(a.src, a.export))
     else:
         sys.exit(check(a.src, a.speed))
 

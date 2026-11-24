@@ -60,9 +60,10 @@ python3 <이 스킬 폴더>/scripts/swipe.py --rss @채널1 @채널2 --save c.js
 python3 <이 스킬 폴더>/scripts/swipe.py c.json --min 2.0
 python3 <이 스킬 폴더>/scripts/audioqc.py clean 원본.wav 정리.wav       # AI 내레이션 앞뒤 잡음 제거, 말끝 보존
 python3 <이 스킬 폴더>/scripts/audioqc.py check 완성본.mp4             # 튀는 소리·끊김 자동 점검
+python3 <이 스킬 폴더>/scripts/audioqc.py cuts cuts.txt --export 조각/   # 현장 음성 자르는 점이 말 중간인지 검사 + 조각 꺼내기
 ```
 
-**영상·음성을 직접 만들 때는 항상** `references/audio.md` 의 다섯 가지 규칙을 지킨다 (이음매 페이드, 압축은 마지막 한 번, adeclick, 완성본 점검).
+**영상·음성을 직접 만들 때는 항상** `references/audio.md` 의 여섯 가지 규칙을 지킨다 (이음매 페이드, 압축은 마지막 한 번, adeclick, 완성본 점검, **현장 음성은 문장 단위로 자르고 조각마다 받아쓰기로 처음·끝 단어 확인**). 쇼츠·예고처럼 원본을 잘라 만드는 영상은 6번을 건너뛰지 않는다.
 
 `scripts/hooks.json`: 훅 공식 21가지 (한국어 이름·모양·예시·실패 조건·판별 패턴).
 
