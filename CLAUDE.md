@@ -8,6 +8,7 @@
 - `dist/youtube-studio.zip`: claude.ai 업로드용 패키지. 직접 수정하지 말고 `./build.sh` 로 다시 만든다.
 - `templates/vlog-video/`: 브이로그 영상 제작 틀(모션그래픽·본편 이어 붙이기·세로 예고). 새 영상을 같은 스타일로 만들 때 `media/<편>/` 로 복사해 쓴다. 사용법은 그 폴더의 README.md.
 - `templates/slide-video/`: 조사형 슬라이드 영상 제작 틀(PDF 슬라이드 → 직접 녹음 → 모션그래픽·자막 영상). 칭다오 마운자로 1·2편 방식. 사용법은 그 폴더의 README.md.
+- **"이라도시 AI음성"**: AI 나레이션 고정 설정(힉스필드 minimax · keechang-standard · 발표형 나레이션). 사용자가 이 이름을 말하거나 AI 음성으로 나레이션·더빙을 요청하면 `templates/slide-video/README.md` 의 "이라도시 AI음성" 절을 그대로 따른다. 크레딧은 원고를 확정하고 견적을 알린 뒤 "진행"을 받고 쓴다.
 
 ## 작업 규칙
 
